@@ -1,11 +1,9 @@
 *** Settings ***
-#Test Teardown     Close Browser
-Library    SeleniumLibrary
-Library    String
-Library    DateTime
-Library    BuiltIn
-Library    Collections
-
+Library           SeleniumLibrary
+Library           String
+Library           DateTime
+Library           BuiltIn
+Library           Collections
 
 *** Variables ***
 ${baseurl}        https://uat.worldvision.in/
@@ -27,6 +25,8 @@ ${year_input}    2020
 ${language_input}    English
 ${user_name}      9999999997
 ${password}       password
+${OtherPassportUser}    testmail@test.com
+${OtherPassportPass}    test
 ${addon_val}      100
 ${real_gift_enter_val}    1000
 @{email_validation}    asdasdad    934852    )*&%^&^%&^%    @gmail    @gmail.com    @@gmail.com    asdgasd.com    (^*&*^)*&@gmail.com
@@ -49,15 +49,20 @@ ${checkout_payment_list_no}    4
 @{Get_involved}    Events    Volunteer
 @{Media_submenu_txt}    Press Releases    News Articles    Blog    Publication
 @{Partnership_submenu_txt}    Corporate
-#@{post_login_my_world_submenu_txt}
+@{post_login_my_world_submenu_txt}
 @{post_login_waysto_give}    Overview    HoSh - Hope to Shine    Back to School    Gift Catalogue    Educate Children    Emergency Relief    HIV & AIDS    Hungerfree    End Child Sexual Abuse    Childhood Rescue    Save Malnourished Children    Where Most Needed
 ${button_failure_txt}    TRY AGAIN NOW
 ${pass1}    abc
 ${pass2}    cba
-
+${HungerFree_amt}    4000
+@{how_do_you_know}    Tele-Caller    Fundraising Volunteer    Existing Donor    Friends and Family    Online Ads    Others
+${SIOtherPassMessage}    Auto debit option is not available for the other passport holders, kindly uncheck the “Allow Auto Debit” option and continue your sponsorship.
+@{whyDoYouWantToLeave}    Will Donate Later    Know more about us    Already a Donor    Want to add more gifts
+@{peopleHaveDonateButton}    by-specifics    educate-children    save-malnourished-children    landingPages/child/index-3.html
+@{SocialMedia}    facebook    twitter    linkedin
+@{Months}    Jan    Feb    Mar    Apr    May    Jun    Jul    Aug    Sep    Oct    Nov    Dec
 
 *** Keywords ***
-
 Jenkins browser launch
     Set Selenium Speed    .5s
     ${chrome_options} =    Evaluate    sys.modules['selenium.webdriver'].ChromeOptions()    sys, selenium.webdriver
@@ -70,6 +75,18 @@ Jenkins browser launch
     Set Window Size    1920    1080
     Go To    ${baseurl}
     Set Browser Implicit Wait    60s
+    
+Jenkins browser launch - Without Incognito
+    Set Selenium Speed    .5s
+    ${chrome_options} =    Evaluate    sys.modules['selenium.webdriver'].ChromeOptions()    sys, selenium.webdriver    
+    Call Method    ${chrome_options}    add_argument    headless
+    Call Method    ${chrome_options}    add_argument    disable-gpu
+    Call Method    ${chrome_options}    add_argument    no-sandbox
+    Call Method    ${chrome_options}    add_argument    disable-notifications
+    Create WebDriver    Chrome    chrome_options=${chrome_options}
+    Set Window Size    1920    1080
+    Go To    ${baseurl}
+    Set Browser Implicit Wait    20s    
 
 Local browser launch
     Set Selenium Speed    .5s
@@ -139,6 +156,7 @@ Login
     
   
 Direct login
+    Sleep   5s
     Click Element    id=edit-name
     Input Text    id=edit-name    ${user_name}
     Click Element    id=edit-pass
@@ -246,8 +264,10 @@ SI flow campaign
     Click Element    xpath=//button[@class='btn btn-primary si_modal_btn']
     
 one time campaign
+    Sleep    10s    
     Click Element    xpath=.//div[@class='item-image']//img
     ${camp_name}=    Get Text    xpath=.//div[@class='inner_banner_pledge_content']/h2/div
+    Sleep    5s    
     Click Element    xpath=(//div[@class='price save-malnourished-cart-sec'])[2]/label
     Click Element    id=ChkForSI
     
@@ -266,6 +286,7 @@ one time campaign
 
     Click Element    xpath=//a[@class='view_cart']
     ${camp_val}=    Replace String    ${edu_child_amt}    4    4,
+    
     [Return]    ${camp_name}    ${camp_val}
     
 One time Hunger Free campaign
@@ -478,22 +499,19 @@ Direct login - Other passport user
     Click Element    xpath=(//div[@class='login-form__submit']/button)[1]    
     
 MyProfile Edit
-    Mouse Over    xpath=.//li[@class='welcomesponsor']
-    Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My profile')]
+    View Myprofile
     Click Element    xpath=.//a[contains(.,'Edit Profile')]
     Scroll Element Into View    xpath=.//label[@for='edit-field-nationality']
    
 Check other passport holder        
     ${OtherPassStatus}=    Run Keyword And Return Status    Element Should Be Disabled    xpath=//label[@for='othctzn']        
     Run Keyword If    'True'!='${OtherPassStatus}'    Fail    "INDIAN User can able to select other passport user"
-    Mouse Over    xpath=//li[@class='welcomesponsor']        
-    Click Element    xpath=//a[contains(text(),'My profile')]    
+    View Myprofile    
 
 Check indian passport holder
     ${indianPassStatus}=    Run Keyword And Return Status    Element Should Be Disabled    xpath=//input[@id='indctzn']        
     Run Keyword If    'True'!='${indianPassStatus}'    Fail    "OTHER PASSPORT User can able to select Indian Citizen"
-    Mouse Over    xpath=//li[@class='welcomesponsor']        
-    Click Element    xpath=//a[contains(text(),'My profile')]  
+    View Myprofile 
     
 Navigation banner close   
     ${nav_banner_status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@id='mySidenav']/a    
@@ -817,7 +835,6 @@ check in view cart page - One time donation flow
     
     [Return]    ${cart_quanity}   
 
-
 CCavenue payment - cart verification
     [Arguments]    ${camp_name}    ${Camp_val}    ${cart_quanity}
     
@@ -825,12 +842,18 @@ CCavenue payment - cart verification
     Banner Alert    
     ${order_status}=    Get Text   xpath=//div[@class='payment-success-message1']/p
     Log To Console    ${order_status}
-    ${status_campaign}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//td[contains(text(),'${camp_name}')]
-    Run Keyword If    'True'=='${status_campaign}'    Log To Console    "${camp_name} is displayed in payment page"    ELSE    Fail    "${camp_name} was not displayed in payment page"      
-    ${campaign_quanity}=    Get Text    class=dynamic-quantity
-    Run Keyword If    '${cart_quanity}'=='${campaign_quanity}'    Log To Console    "campaign quantity ${campaign_quanity} is displayed in payment page"    ELSE    Fail    "campaign quantity ${cart_quanity} was not displayed in payment page"   
-    ${status_price}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//td[contains(text(),'${camp_val}')]
-    Run Keyword If    'True'=='${status_price}'    Log To Console    "${camp_val} campaign value is displayed in payment page"    ELSE    Fail    "${camp_val} campaign value was not displayed in payment page"    
+        
+    ${count}=    Get Element Count    xpath=//td[contains(@class,'views-field-product-id')]
+    FOR    ${element}    IN RANGE    1    ${count}+1
+        ${status_campaign}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//td[contains(text(),'${camp_name}')]
+        Run Keyword If    'True'=='${status_campaign}'    Log To Console    "${camp_name}" is displayed in payment page    ELSE    Fail    "${camp_name} was not displayed in payment page"
+        
+        ${campaign_quanity}=    Get Text    xpath=//td[contains(text(),'${camp_name}')]/following-sibling::td[2]//span
+        Run Keyword If    '${cart_quanity}'=='${campaign_quanity}'    Log To Console    campaign quantity is: ${campaign_quanity}    ELSE    Fail    campaign quantity was not displayed
+        
+        ${status_price}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//td[contains(text(),'${camp_name}')]/following-sibling::td[3][contains(text(),'${camp_val}')]
+        Run Keyword If    'True'=='${status_price}'    Log To Console    "${camp_val} campaign value is displayed in payment page"    ELSE    Fail    "${camp_val} campaign value was not displayed in payment page"    
+    END 
 
 Total cart value
     ${total_cart_value}=    Get Text    xpath=//div[contains(@class,'order-total-line__total')]/span[2]
@@ -905,11 +928,12 @@ Event page filter verification
     [Arguments]    ${month_input}    ${year_input}
     
     ${month_sort}=    Get Substring    ${month_input}    0    3
-    #Element Should Be Visible    xpath=//div[@class='media-press-page pressres']    
-    ${month}=    Get Text    xpath=//div[@class='media-press-page pressres']//span[@class='media-mont']
-    Run Keyword If    '${month_sort}'!='${month}'    Fail    Month mismatch or No data found
-    ${year}=    Get Text    xpath=//div[@class='media-press-page pressres']//span[@class='media-year']
-    Run Keyword If    '2019'!='${year}'    Fail    Month mismatch or No data found
+    #Element Should Be Visible    xpath=//div[@class='media-press-page pressres']  
+    Scroll Element Into View    xpath=//div[@class='media-press-page']//span[@class='media-mont' and contains(text(),'${month_sort}')]  
+    ${month}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@class='media-press-page']//span[@class='media-mont' and contains(text(),'${month_sort}')]
+    Run Keyword If    '${month}'!='True'    Fail    Month mismatch or No data found
+    ${year}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@class='media-press-page']//span[@class='media-year' and contains(text(),'${year_input}')]
+    Run Keyword If    '${year}'!='True'    Fail    Year mismatch or No data found
 
 Kerala flood campaign
     [Arguments]    ${value}
@@ -931,7 +955,13 @@ CCavenue payment - failure cart verification
     [Arguments]    ${camp_name}    ${Camp_val}    ${cart_quanity}
     
     Sleep    20s    
-    Banner Alert        
+    Banner Alert                  
+    ${payment_msg}=    Get Text    xpath=.//div[@class='content block-content']/div/h3/span
+    ${Payment_msg}=    Remove String Using Regexp    ${payment_msg}    \\W*\\d*
+    #Log To Console    Payment failure text: ${payment_msg}    
+    Run Keyword If    'PAYMENTFAILED'!='${payment_msg}'    Fail    "Payment Failure page not display"     
+    ${order_id}=    Get Text    xpath=//div[@class='content block-content']/div/h3/p         
+    Log To Console    ${order_id}     
     ${status_campaign}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//td[contains(text(),'${camp_name}')]
     Run Keyword If    'True'=='${status_campaign}'    Log To Console    "${camp_name} is displayed in payment page"    ELSE    Fail    "${camp_name} was not displayed in payment page"      
     ${campaign_quanity}=    Get Text    xpath=//td[contains(text(),'${camp_name}')]/following-sibling::td[2]//span
@@ -1163,6 +1193,492 @@ Password doesnt matching check
     ${password}=    Get Element Attribute    xpath=//div[contains(@class,'password-confirm')]/span    class
     Run Keyword If    '${password}'!='error'    Fail    Password is matching icon visible    ELSE    Log To Console    Password doesnt match icon visible
 
-Finish Testcase
+HDFC payment failure flow
+    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//input[contains(@id,'edit-payment-information-payment-method')]/following-sibling::span[contains(text(),'${checkout_payment_list_text}[2]')]
+    Run Keyword If    '${status}'=='True'    Click Element    xpath=//span[contains(text(),'POWERED BY HDFC BANK')]//preceding-sibling::input    ELSE    Log    POWERED BY HDFC BANK is not dispalyed
+    Sleep    20s    
+    Click Element    xpath=//div[@id='edit-actions']/button[contains(text(),'pay my contribution')]
+    
+    Wait Until Element Is Visible    xpath=//li[contains(text(),'Pay with')]    30s    
+    Click Element    xpath=//li[contains(text(),'Pay with')]    
+    Sleep    5s        
+    Mouse Over    id=hdfc_credit
+    Click Element    id=hdfc_credit
+    Sleep    5s      
+    Click Element    id=cancel_btn
+
+Axis payment failure flow
+    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//input[contains(@id,'edit-payment-information-payment-method')]/following-sibling::span[contains(text(),'${checkout_payment_list_text}[1]')]
+    Run Keyword If    '${status}'=='True'    Click Element    xpath=//span[contains(text(),'Powered by AXIS BANK')]//preceding-sibling::input    ELSE    Log    POWERED BY HDFC BANK is not dispalyed
+    Sleep    20s        
+    Click Element    xpath=//div[@id='edit-actions']/button[contains(text(),'pay my contribution')]               
+    Element Should Be Visible    id=btnCancel    30s
+    Click Element    id=btnCancel     
+    Alert Should Be Present    action=ACCEPT    timeout=30s
+
+Welcome user banner text
+    [Arguments]    ${content}
+    
+    Click Element    xpath=//div[@class='header_new_logo']//a    
+    Sleep    15s    
+    ${banner_count}=    Get Element Count    xpath=//div[@class='swiper-wrapper']/following-sibling::div//span[contains(@aria-label,'Go to slide')]
+    ${banner_count}=    Convert To Integer    ${banner_count}    
+    FOR    ${element}    IN RANGE    1    ${banner_count}+1
+        Click Element    xpath=//div[@class='swiper-wrapper']/following-sibling::div//span[contains(@aria-label,'Go to slide ${element}')]
+        Capture Page Screenshot
+        ${status}=    Run Keyword And Return Status    Element Should Contain    xpath=//div[@class='banner-content']/h2[contains(text(),'${content}')]    ${content}            
+        Run Keyword If    '${status}'=='True'    Log To Console    Welcome user banner is visible        
+        Exit For Loop If    '${status}'=='True'
+    END            
+    Run Keyword If    '${status}'!='True'    Fail    Welcome user banner was not visible
+
+other passport user flow    
+    Click Element    xpath=.//div[@class='item-image']//img
+    ${camp_name}=    Get Text    xpath=.//div[@class='inner_banner_pledge_content']/h2/div   
+    ${label_val}=    Get Text    xpath=//label[contains(text(),'3 Months')]
+    #${label_val}=    Get Text    xpath=(//div[@class='price save-malnourished-cart-sec'])[2]/label
+    ${Camp_amt}=    Get Substring    ${label_val}    9    16
+    Log To Console    Final val is: ${camp_amt}    
+    SI Payment disable check
+    Sleep    15s    
+    Wait Until Element Is Visible    xpath=(//div[@class='price save-malnourished-cart-sec'])[2]/label    15s    
+    Click Element    xpath=(//div[@class='price save-malnourished-cart-sec'])[2]/label
+    Sleep    10s           
+    Add to cart text change    
+    Click Element    xpath=//div[@class='kl_flood_sub_or_sec']    
+    ${success_mgs}=    Get Text    xpath=.//h2[@class='chat-text']
+    Run Keyword If    '${success_mgs}'!='Success !'    Fail    "Success ! msg not found"    
+    Click Element    xpath=//a[@class='view_cart']        
+    
+    [Return]    ${camp_name}    ${camp_amt}
+
+SI Payment disable check    
+    ${status}=    Run Keyword And Return Status    Element Should Not Be Visible    id=ChkForSI
+    Run Keyword If    '${status}'!='True'    Fail    SI Payment is enabled for Other passport user    ELSE    Log    SI Payment is disabled for Other Passport Users
+
+Hdfc bank payment gateway check    
+    ${checkout_banklist_name_check}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div/span[contains(.,'POWERED BY HDFC BANK')]
+    Run Keyword If    'True'!='${checkout_banklist_name_check}'    Fail    HDFC payment gateway doesnt appear    ELSE    Log To Console    HDFC payment gateway is visible
+
+Nationality Check        
+    ${Nationality}=    Get text    xpath=//div[contains(text(),'Nationality')]/following-sibling::div
+    Run Keyword If    'Other Passport Holder'!='${Nationality}'    Fail    "User is a: ${Nationality}"
+
+SI payment gateway check
+    Sleep    15s    
+    ${price_SI}=    Get Text    id=TotalAmtOfOrder
+    ${price_SI}=    Convert to price    ${price_SI}
+    Log To Console    campaign amount is: ${price_SI}         
+    FOR    ${element}    IN    @{SI_payment_list_text}
+        ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@class='payment-main-content']/div[contains(text(),'${element}')]
+        Run Keyword If    '${status}'!='True'    Fail    '${element} was not displayed"    ELSE    Log To Console    "${element} is displayed"    
+    END
+    
+View Myprofile    
+    Mouse Over    xpath=.//li[@class='welcomesponsor']
+    Click Element    xpath=//ul[@class='mypro-lgot']/li/a[contains(.,'My Profile')]
+    
+Nationality Check - Indian        
+    ${Nationality}=    Get text    xpath=//div[contains(text(),'Nationality')]/following-sibling::div
+    Run Keyword If    'Indian Citizen'!='${Nationality}'    Fail    "User is a: ${Nationality}"    
+
+Indian payment gateway check - payment gateway
+    FOR    ${checkout_bank_txt}    IN    @{checkout_payment_list_ind_passport}
+        ${checkout_banklist_name_check}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//input[contains(@id,'edit-payment-information-payment-method')]/following-sibling::label[contains(.,'${checkout_bank_txt}')]
+        Run Keyword If    'True'!='${checkout_banklist_name_check}'    Fail    'Indian passport holder Payment Gateway ${checkout_bank_txt} text is mismatch'
+    END
+
+Main and submenu selection
+    [Arguments]    ${main_menu}    ${sub_menu}
+    
+    Mouse Over    xpath=//div[@class='main-menu-inner']//span[contains(text(),'${main_menu}')]
+    Click Element    xpath=//div[@class='main-menu-inner']//span[contains(text(),'${main_menu}')]//parent::li//li/a[contains(text(),'${sub_menu}')]
+
+Click mainmenu
+    [Arguments]    ${main_menu}
+    
+    Click Element    xpath=//div[@class='main-menu-inner']//*[contains(text(),'${main_menu}')]
+
+Click Login    
+    Click Element    xpath=//a[contains(text(),'Login')]
+
+Click Cart
+    Click Element    xpath=.//a[contains(.,'My Gifts')]
+
+Click my next payment
+    Click Element    xpath=//li[@class='post_lgn']/a        
+
+Mycampaign Check
+    [Arguments]    ${camp_name}
+    
     Sleep    10s    
-    Close All Browsers
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@class='user_campheading']//a[contains(text(),'${camp_name}')]        
+    Run Keyword If    '${status}'!='True'    Fail    Campaign is not added in my campaign page    ELSE    LOG    Campaign is added in my campaign page
+
+Logout    
+    Mouse Over    xpath=.//li[@class='welcomesponsor']
+    Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'Logout')]
+    
+one time campaign - Hunger Free campaign - Multiple payment
+    [Arguments]    ${campaign_amount}
+    
+    Sleep    10s
+    Click Element    xpath=.//div[@class='add-to-cart-section']
+    ${camp_name}=    Get Text    xpath=.//div[@class='inner_banner_pledge_content']/h2/div
+    ${camp_name}=    Remove String    ${camp_name}    Free    
+    
+    Clear Element Text    xpath=//input[@class='commerce_manual_input realgift_inputvalue realgift_input']
+    Click Element    xpath=.//input[@class='commerce_manual_input realgift_inputvalue realgift_input']
+    Input Text    xpath=.//input[@class='commerce_manual_input realgift_inputvalue realgift_input']    ${campaign_amount}    
+    Sleep    5s    
+    
+    Click Element    xpath=//div[@class='kl_flood_sub_or_sec']
+    
+    ${success_mgs}=    Get Text    xpath=.//h2[@class='chat-text']
+    Run Keyword If    '${success_mgs}'!='Success !'    Fail    "Success ! msg not found"
+        
+    Click Element    xpath=//a[@class='view_cart']
+    
+    ${camp_val_1st}=    Get Substring    ${campaign_amount}    0    1   
+    ${camp_val_2st}=    Get Substring    ${campaign_amount}    1    5
+    Log To Console    ${camp_val_1st}    ${camp_val_2st}
+    ${camp_val}=    Evaluate    '${camp_val_1st}'+','+'${camp_val_2st}'
+    #Log To Console    ${camp_val}         
+    
+    [Return]    ${camp_name}    ${camp_val}    
+
+I Pledge to Support Click
+    Sleep    5s    
+    Click Element    xpath=.//div[@class='item-image']//img
+
+SI login - Other Passport
+    Wait Until Element Is Visible    xpath=//input[contains(@id,'exampleInputEmail')]    30s
+    Click Element    xpath=//input[contains(@id,'exampleInputEmail')]    
+    Input Text    xpath=//input[contains(@id,'exampleInputEmail')]    ${OtherPassportUser}
+    Click Element    xpath=//input[contains(@id,'exampleInputPassword')]
+    Input Text    xpath=//input[contains(@id,'exampleInputPassword')]    ${OtherPassportPass}
+    
+    Sleep    10s    
+    Click Element    id=si_login_btn
+    
+SI Other Passport Disabled Alert
+    Sleep    10s    
+    ${OtherPassSIAlert}=    Get Text    xpath=//div[@class='otherHolderFlow']/div
+    Run Keyword If    '${SIOtherPassMessage}'=='${OtherPassSIAlert}'    SI Other Passport alert button click    ELSE    Fail    SI payment restriction alert for Other passport user is not displayed    
+                
+SI Other Passport alert button click
+    Sleep    3s    
+    Click Element    class=otherHolderBtn
+
+Page Title Check and confirm
+    [Arguments]    ${element}
+    
+    ${pageTitle}=    Get Title    
+    Should Contain    ${pageTitle}    ${element} 
+    
+Gift Cart Click
+    Sleep    2s    
+    Click Element    xpath=.//a[contains(.,'My Gifts')]
+    
+Rotator Allow Auto Debit status check
+    Sleep    2s    
+    ${status}=    Get Element Attribute    xpath=//div[@class='item active childRotator' or @class='item childRotator active']//label[@class='chkSIpatent']/input    checked
+    Run Keyword If    '${status}'!='true'    Fail    Auto payment is not checked    ELSE    Log    Auto payment is checked        
+    
+Rotator Proceed To Autopay
+    Click Element    xpath=//div[@class='item active childRotator' or @class='item childRotator active']//button[contains(text(),' PROCEED TO AUTOPAY ')]    
+
+Why do you want to leave - PopUp
+    Sleep    5s    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//span[@class='close-survey2']    
+    Run Keyword If    'True'=='${status}'    Click Element    xpath=//span[@class='close-survey2']
+    
+My Next Payment
+    Click Element    xpath=.//li[@class='post_lgn']/a
+    
+My Next Payment Gift Menu and My Child Menu Check
+    
+    Sleep    5s    
+    ${status}=    Get Element Attribute    xpath=//ul[@class='nav nav-tabs gift-donation']/li[contains(.,'Donation')]    class
+    Run Keyword If    '${status}'!='active'    Fail    Donation was not selected by default    ELSE    Log    Donation was selected by default    
+    
+    ${status}=    Get Element Attribute    id=childsec-shwhde    class
+    #${status}=    Get Element Attribute    xpath=//div[@id='donation']//a[contains(text(),'My Child') or contains(text(),'My Children')]    class
+    Run Keyword If    '${status}'!='tog-active'    Fail    My Child was not selected by default    ELSE    Log    My Child was selected by default 
+
+My Next Payment Gift Menu Check and Select Submenu
+    [Arguments]    ${SubMenu}
+    
+    Sleep    5s    
+    ${status}=    Get Element Attribute    xpath=//ul[@class='nav nav-tabs gift-donation']/li[contains(.,'Donation')]    class
+    Run Keyword If    '${status}'!='active'    Fail    Donation was not selected by default    ELSE    Log    Donation was selected by default    
+    Click Element    xpath=//div[@id='donation']//a[contains(text(),'${SubMenu}')]
+    
+Banner Alert Capture       
+    Wait Until Element Is Visible    xpath=(//h6[text()='Share the Joy'])[1]    60s
+    ${banner_status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=(//h6[text()='Share the Joy'])[1]
+    Run Keyword If    'True'=='${banner_status}'    Log    Share the joy Dialog Box Displayed     ELSE    Log To Console    Share the joy Dialog Box is not Displayed    
+
+Why do you want to leave alert button check    
+    Wait Until Element Is Visible    xpath=//p[contains(text(),'Do you want to leave without gifting?')]    60s    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//p[contains(text(),'Do you want to leave without gifting?')]    
+    Run Keyword If    'True'=='${status}'    Log To Console    Why do you want to leave dialog box appeared    ELSE    Fail    Why do you want to leave dialog box doesn't appear
+    
+    FOR    ${element}    IN    @{whyDoYouWantToLeave}
+        ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=(//div[contains(@class,'modal-content-survey')])[2]/div//span[contains(text(),'${element}')]        
+        Run Keyword If    '${status}'!='True'    Fail    ${element}: Button is not visible    ELSE    Log    ${element}: Button is visible
+    END
+
+CCavenue payment flow
+    ${chck_ccaveneu_click}=    Get Element Attribute    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div/span[contains(.,'Powered by CC Avenue')]/parent::div    class
+    Run Keyword If    '${chck_ccaveneu_click}'!='js-form-item form-item js-form-type-radio form-item-payment-information-payment-method js-form-item-payment-information-payment-method active'    Click Element    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div/span[contains(.,'Powered by CC Avenue')]/parent::div
+    Sleep    30s
+    Click Element    //button[text()='pay my contribution']        
+    Wait Until Element Is Visible    xpath=(.//div[@id='OPTNBK']//span[2][contains(text(),'Net Banking')])[1]    15s    
+    Click Element    xpath=(.//div[@id='OPTNBK']//span[2][contains(text(),'Net Banking')])[1]
+    Select From List By Value    id=netBankingBank    AvenuesTest
+    Click Element    xpath=(.//span[starts-with(text(),'Make')])[3]
+    Click Element    xpath=.//input[@type='submit']
+
+Share the Joy Alert Capture
+    Wait Until Element Is Visible    xpath=(//h6[text()='Share the Joy'])[1]    60s
+    ${banner_status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=(//h6[text()='Share the Joy'])[1]
+    Run Keyword If    'True'=='${banner_status}'    Log    Share the joy Dialog Box Displayed     ELSE    Log To Console    Share the joy Dialog Box is not Displayed
+    
+Share The Joy Email Section
+    Click Element    xpath=(//a[text()='Email'])[1]
+    Input Text    class=refer_share_email    test@test.com
+    Input Text    class=refer_share_phone    password
+    Element Should Be Visible    class=wv_refer_email_content    60s
+    Click Element    class=wv_refer_email_btn     
+
+Share The Joy Copy URL Section
+    Click Element    xpath=(//a[text()='Copy URL'])[1]    
+    Click Element    Class=cpyButton
+    Sleep    5s    
+    Element Should Be Visible    id=copiedURL    60s 
+    
+People have Also Donated for Content Check
+    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//h3[contains(text(),'People have Also Donated for')]    
+    Run Keyword If    '${status}'!='True'    Fail    "People have also donated for" message is not visible    ELSE    Log    "People have also donated for" message is visible
+
+    FOR    ${element}    IN    @{peopleHaveDonateButton}
+        ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//a[@href='${element}']    
+        Run Keyword If    '${status}'!='True'    Fail    Button is not visible    ELSE    Log    Button is visible    
+    END
+    
+Share The Joy Social Media Section
+    Click Element    Xpath=(//a[text()='Social Media'])[1]    
+    
+    FOR    ${element}    IN    @{SocialMedia}
+        ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=(//span[contains(@class,'${element}')])[1]    
+        Run Keyword If    '${status}'!='True'    Fail    Button is not visible    ELSE    Log    Button is visible
+    END
+    
+Click Register
+    Click Element    xpath=//a[contains(text(),'Register')]
+
+Select Title
+    [Arguments]    ${Title}
+    
+    Select From List By Label    id=edit-field-title    ${Title}
+    
+Enter First Name
+    [Arguments]    ${FirstName}    
+
+    Input Text    id=edit-field-first-name-0-value    ${FirstName}
+
+Enter Last Name
+    [Arguments]    ${LastName}    
+
+    Input Text    id=edit-field-last-name-0-value    ${LastName}
+
+Enter Email ID
+    [Arguments]    ${Email}
+
+    Input Text    id=edit-mail    ${Email}
+    
+Enter Phone Number
+    [Arguments]    ${Phone}
+    
+    Input Text    id=edit-field-mobile-verify-0-mobile    ${Phone}
+
+Enter Password
+    [Arguments]    ${InputPassword}
+    
+    Wait Until Element Is Visible    id=edit-pass-pass1    20s
+    Click Element    //label[@for='edit-pass-pass1']    
+    Input Text    id=edit-pass-pass1    ${InputPassword}
+
+Enter Confirm Password
+    [Arguments]    ${ConfirmPassword}
+
+    Wait Until Element Is Visible    id=edit-pass-pass2    20s
+    Click Element    //label[@for='edit-pass-pass2']
+    Input Text    id=edit-pass-pass2    ${ConfirmPassword}
+
+Enter Address Field I
+    [Arguments]    ${AddressI}
+    
+    Input Text    id=edit-field-registeraddress-0-value    ${AddressI}
+
+Click Create My Account    
+    Click Element    class=singUpRegister    
+
+Element Status Check
+    [Arguments]    ${element}    ${alert_Positive_msg}    ${alert_Negative_msg}
+    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    ${element}
+    Run Keyword If    '${status}'=='True'    Log    ${alert_Positive_msg}    ELSE    Fail    ${alert_Negative_msg}
+    
+BySpecific location click
+    [Arguments]    ${location}
+    
+    Sleep    5s    
+    Click Element    xpath=//span[@class='facet-item__value' and contains(text(),'${location}')]
+    
+Click Above 12 years
+    Sleep    5s    
+    Click Element    xpath=//label[@for='age-range-above-12-years']
+    
+Click Below 12 years
+    Sleep    5s    
+    Click Element    xpath=//label[@for='age-range-6-12-years']    
+
+Click Age Filter
+    [Arguments]    ${age}
+    
+    Sleep    5s    
+    Run Keyword If    ${age}<12    Click Below 12 years    ELSE    Click Below 12 years    
+    
+Click Gender Boy    
+    
+    Sleep    5s    
+    Click Element    xpath=//label[@for='gender-boy']
+    
+Click Gender Girl    
+    
+    Sleep    5s    
+    Click Element    xpath=//label[@for='gender-girl']
+    
+Get Child Details BySpecific Page
+    
+    ${ChildName}=    Get Text    xpath=(//div[@class='bySpecName'])[1]/p[1]  
+    ${ChildDOB}=    Get Text    xpath=(//div[@class='bySpecName'])[1]/p[2]
+    ${day}=    Get Substring    ${ChildDOB}    9   10
+    ${day}=    Convert To Integer    ${day}    
+    ${month}=    Get Substring    ${ChildDOB}    6    7    
+    ${month}=    Convert To Integer    ${month}
+    ${year}=    Get Substring    ${ChildDOB}    0    4
+    ${year}=    Convert To Integer    ${year}
+    
+    ${ChildAge}=    Get Text    xpath(//div[@class='bySpecinfo'])[1]//span[@class='bySpecage']    
+    ${ChildGender}=    Get Text    xpath=(//div[@class='bySpecinfo'])[1]//span[@class='bySpecGender']
+    ${Location}=    Get Text    xpath=//div[@class='bySpecLocation']/p
+    ${Location}=    Get Substring    ${Location}    1    7
+    
+    [Return]    ${ChildAge}    ${day}    ${month}    ${year}    ${Location}    ${childGender}
+    
+Click Gender in BySpecific Page
+    [Arguments]    ${gender}
+        
+    Run Keyword If    '${gender}'=='boy'    Click Gender Boy    ELSE    Click Gender Girl   
+
+Click Month Filter in BySpecific Page
+    [Arguments]    ${month}
+    
+    ${month}=    Evaluate    ${month}+1    
+    ${TextMonth}=    Set Variable    ${Months}[${month}]      
+    Click Element    id=monthOnly
+    Click Element    xpath=//span[@class='month' and contains(text(),'${TextMonth}')]  
+    
+Select Date in BySpecific Page
+    [Arguments]    ${day}
+    
+    Click Element    id=dateonly    
+    Click Element    xpath=//td[@data-handler='selectDay' and contains(text(),'${day}')]    
+
+Main Menu Search Button Click
+    Sleep    5s    
+    Click Element    xpath=//li[@class='separate_border header_search'] 
+    
+Input Data Into Search Box
+    [Arguments]    ${data}
+    
+    Wait Until Element Is Visible    id=edit-search-api-fulltext      60s
+    Input Text    id=edit-search-api-fulltext    ${data}
+
+Search Page Child List    
+    ${ElementCount}=    Get Element Count    xpath=//div[@class='search-page-childimg test']
+    Should Be Equal As Integers    4    ${ElementCount}    
+
+Click Add to Cart in Search Page
+    ${childName}=    Get Text    xpath=(//div[@class='search-page-childimg test'])[1]/h4
+    Mouse Over    class=search-page    
+    Click Element    xpath=(//div[@class='add-cart-btn'])[1]    
+
+    [Return]    ${childName}
+    
+Click 3Month package
+    ${Camp_Amount}=    Get Text    xpath=//label[contains(text(),'3 Months')]
+    ${final_val}=    Get Substring    ${Camp_Amount}    9    16
+    Click Element    xpath=//label[contains(text(),'3 Months')]   
+     
+    [Return]    ${final_val}
+SI Payment Check Verify
+    Sleep    5s    
+    ${status}=    Get Element Attribute    id=ChkForSI    checked
+    Run Keyword If    '${status}'!='true'    Fail    SI Payment is unchecked    ELSE    Log    SI Payment is checked
+    
+SI Payment Uncheck Verify
+    Sleep    5s    
+    ${status}=    Get Element Attribute    id=ChkForSI    checked
+    Run Keyword If    '${status}'!='false'    Fail    SI Payment is checked    ELSE    Log    SI Payment is not checked
+
+Proceed to Pay Button
+    Click Element    xpath=(//button[contains(@class,'si_modal_btn')])[1]            
+
+SI payment gateway check New
+    Sleep    15s    
+    ${price_SI}=    Get Text    id=TotalAmtOfOrder
+    ${price_SI}=    Convert to price    ${price_SI}
+    Log To Console    campaign amount is: ${price_SI}         
+    FOR    ${element}    IN    @{SI_payment_list_text}
+        ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=(//div[@class='payment-main-content'])[1]/div[contains(text(),'${element}')]
+        Run Keyword If    '${status}'!='true'    Fail    '${element} was not displayed"    ELSE    Log To Console    "${element} is displayed"    
+    END
+    
+Click SI CheckBox
+    Click Element    id=ChkForSI    
+
+Click Add To Cart
+    Click Element    xpath=(//div[@class='kl_flood_sub_or_sec'])[1]  
+
+Checkout flow campaign - search and donate      
+    ${label_val}=    Get Text    xpath=//label[contains(text(),'3 Months')]    
+    ${Camp_amt}=    Get Substring    ${label_val}    9    16
+    Log To Console    Final val is: ${camp_amt}
+    Sleep    10s
+    
+    Wait Until Element Is Visible    xpath=(//div[@class='price save-malnourished-cart-sec'])[2]/label    15s    
+    Click Element    xpath=(//div[@class='price save-malnourished-cart-sec'])[2]/label
+    Sleep    10s    
+    Click Element    id=ChkForSI
+    SI Payment Uncheck Verify        
+    Click Element    xpath=//div[@class='kl_flood_sub_or_sec']    
+    ${success_mgs}=    Get Text    xpath=.//h2[@class='chat-text']
+    Run Keyword If    '${success_mgs}'!='Success !'    Fail    "Success ! msg not found"    
+    Click Element    xpath=//a[@class='view_cart']
+    
+    [Return]    ${camp_amt}
+    
+Mouse Hover main menu and click submenu
+    [Arguments]    ${mainmenu}    ${submenu}
+    
+    Mouse Over    xpath=//div[@class='main-menu-inner']//*[contains(text(),'${mainmenu}')]
+    Click Element    xpath=//div[@class='main-menu-inner']//*[contains(text(),'${submenu}')]    
+
+

@@ -1,14 +1,14 @@
 *** Settings ***
-Library    SeleniumLibrary    screenshot_root_directory=../Screenshot/         
+Library    SeleniumLibrary    screenshot_root_directory=../Screenshot/
 Resource    ../Resource/CommonFunctions.robot
-Test Teardown    Finish Testcase
+Test Setup    Jenkins browser launch
+Test Teardown    Close All Browsers
 
 
 *** Test Cases ***
-
 Verify user should able to save the profile without entering any Mandatory details
     [Tags]    My Profile
-    #Local browser launch
+    
     Jenkins browser launch
     Click Element    xpath=//span[@class='Sub_head_Login']
     Click Element    //input[@id='edit-name']
@@ -252,15 +252,37 @@ To verify login through valid email ID with valid password
     Run Keyword If    'True'!='${postlogin_homepage_chck}'    Fail    "Valid user can't able to login"
 
 To Sponsor a child by SI payment flow from search page
-    #Local browser launch
+    [Tags]    To Sponsor a Child
+    
     Jenkins browser launch
-    Click Element    xpath=.//span[@class='Sub_head_search']
-    Input Text    id=edit-search-api-fulltext    hjfhjhf
-    Click Element    id=edit-submit-wv-custom-search
-    ${search_child_count}=    Get Element Count    xpath=.//div[@class='search-page']
-    Run Keyword If    4!=${search_child_count}    Fail    "Enter irrelavent data list of 4 child list not display"
-    Mouse Over    xpath=(.//div[@class='search-page']/div[@class='search-page-childimg test']/h4)[1]
-    Click Element    xpath=(.//div[@class='add-cart-btn'])[1]
+    Main Menu Search Button Click
+    Input Data Into Search Box    asdgasgdas
+    Press Keys    id=edit-search-api-fulltext    ENTER    
+    Search Page Child List    
+    ${childName}    Click Add to Cart in Search Page
+    Element Status Check    xpath=(//div[@class='inner_banner_pledge_content'])[1]/h2[contains(text(),'${childName}')]    Selected Child is Displayed    Selected Child is not Displayed    
+    ${camp_Amt}=    Click 3Month package
+    SI Payment Check Verify
+    Proceed to Pay Button
+    SI login
+    SI payment gateway check New
+
+To Sponsor a child by Checkout payment flow from search page
+    [Tags]    To Sponsor a Child
+    
+    Jenkins browser launch
+    Main Menu Search Button Click
+    Input Data Into Search Box    asdgasgdas
+    Press Keys    id=edit-search-api-fulltext    ENTER
+    Search Page Child List
+    ${childName}    Click Add to Cart in Search Page
+    Element Status Check    xpath=(//div[@class='inner_banner_pledge_content'])[1]/h2[contains(text(),'${childName}')]    Selected Child is Displayed    Selected Child is not Displayed          
+    ${camp_amt}    Checkout flow campaign - search and donate
+    ${cart_quanity}    check in view cart page - Checkout flow    ${childName}    ${camp_amt}
+    View cart proceed button
+    Login
+    CCavenue payment success flow
+    CCavenue payment - cart verification    ${childName}    ${camp_amt}    ${cart_quanity}
 
 # Switching indian citizen to other passport holder in my profile page
     # #Local browser launch
@@ -277,7 +299,7 @@ To Sponsor a child by SI payment flow from search page
     
     # Click Element    xpath=(//div[@class='login-form__submit']/button)[1]
     # Mouse Over    xpath=.//li[@class='welcomesponsor']
-    # Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My profile')]
+    # Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My Profile')]
     # Click Element    xpath=.//a[contains(.,'Edit Profile')]
     # Scroll Element Into View    xpath=.//label[@for='edit-field-nationality']
     # ${ind}=    Execute Javascript    return window.jQuery('#indctzn').prop('checked')
@@ -303,7 +325,7 @@ To Sponsor a child by SI payment flow from search page
         # Run Keyword If    'True'!='${checkout_banklist_name_check}'    Fail    'Checkout Flow Other passport holder Payment Gateway ${bank_txt} text is mismatch'
     # END
     # Mouse Over    xpath=.//li[@class='welcomesponsor']
-    # Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My profile')]
+    # Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My Profile')]
     # Click Element    xpath=.//a[contains(.,'Edit Profile')]
     # Scroll Element Into View    xpath=.//label[@for='edit-field-nationality']
     # Click Element    xpath=.//label[@for='indctzn']
@@ -405,11 +427,10 @@ To verify search child and donate
     View cart proceed button
     Login
     CCavenue payment success flow        
-    Click Element    xpath=.//li[@class='post_lgn']/a
-    Why do you want to quit - PopUp
-    Click Element    xpath=.//li[@class='post_lgn']/a
-    #Click Element    xpath=.//ul[@class='nav nav-tabs gift-donation']/li[contains(.,'Donation')]
-    Click Element    xpath=//div[@id='donation']//a[contains(text(),'My Children')]    
+    My Next Payment
+    Why do you want to leave - PopUp
+    My Next Payment
+    My Next Payment Gift Menu and My Child Menu Check      
     ${check_child_display}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[contains(@class,'chld-items')]//div[@class='cld-nme']/p[contains(.,'${child_name}')]
     Run Keyword If    True!=${check_child_display}    Fail    Payment success, But child details doesnt appear in "My Children" tab
 
@@ -455,7 +476,7 @@ To verify payment flow using failure banner
     Click Element    xpath=//a[contains(text(),'Login')]
     Direct login
     Navigation banner close
-    Payment failure check in home page banner - Click    content    
+    Payment failure check in home page banner - Click   ${button_failure_txt}
     CCavenue payment success flow
     Click Element    xpath=//div[@class='header_new_logo']//a/img  
     Banner Alert
@@ -539,13 +560,11 @@ To sponsor a Hunger Free Campaign as a one time donation using Checkout flow
 
 To sponsor a Where Most Needed Campaign as a one time donation using Checkout flow
     [Tags]    Where Most Needed Campaign
-
+    
     Jenkins browser launch
-    Click Element    xpath=.//a[contains(.,'My Gifts')]
+    Gift Cart Click
     Banner Alert
-    ${get_viewcart_list_count}=    Get Element Count    xpath=//tbody/tr/td[starts-with(@headers,'view-product-')]        
-    ${get_viewcart_list_count}=    Convert To Integer    ${get_viewcart_list_count}            
-    Run Keyword If    ${get_viewcart_list_count} < 1    Log To Console    "No campaign in view cart page"    ELSE    Notification deletion    ${get_viewcart_list_count}            
+    Cart campaign check and delete          
     Mouser hover ways to give campaign    Where Most Needed
     ${camp_name}    ${Camp_val}    one time campaign - Where Most Needed Campaign       
     ${cart_quanity}    check in view cart page - One time donation flow    ${camp_name}    ${Camp_val}
@@ -647,6 +666,7 @@ To sponsor child using SI flow
         Run Keyword If    'True'!='${SI_payment_txt_chck}'    Fail    "SI flow payment gateway ${SI_payment_txt} text are mismatch"
     END
     
+
 Just post login check hungerfree campaign
     [Tags]    Post Login 
     
@@ -692,13 +712,14 @@ Just post login check hungerfree campaign
     Run Keyword If    'True'!='${hunger_camp_amt_viewcart}'    Fail    "Hunger Free campaign amount are not display/mismatch in view cart page"
     View cart proceed button
     CCavenue payment success flow
-    Click Element    xpath=.//li[@class='post_lgn']/a
-    Why do you want to quit - PopUp
-    Click Element    xpath=.//li[@class='post_lgn']/a
+    My Next Payment
+    Why do you want to leave - PopUp
+    My Next Payment
     Click Element    xpath=.//ul[@class='nav nav-tabs gift-donation']/li[contains(.,'Donation')]
-    Click Element    xpath=.//div[@class='tog-top-sec']/ul/li[contains(.,'My Donations')]
-    ${hunger_free_label_chck}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@class='childData']/following-sibling::div//div[@class='cld-nme']/p[contains(.,'HungerFree')]
-    Run Keyword If    'True'!='${hunger_free_label_chck}'    Fail    "Hunger free label not display"
+    Click Element    xpath=.//div[@class='tog-top-sec']/ul/li[contains(.,'My Donations')]    
+    Page Should Contain Element    xpath=//div[@class='childData']/following-sibling::div//div[@class='cld-nme']/p[contains(.,'HungerFree')]    
+    # ${hunger_free_label_chck}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@class='childData']/following-sibling::div//div[@class='cld-nme']/p[contains(.,'HungerFree')]
+    # Run Keyword If    'True'!='${hunger_free_label_chck}'    Fail    "Hunger free label not display"
     ${add_label_amt+input_amt}=    Evaluate    ${final_label_amt}+${get_input_val}
     Log To Console    Before hunger label amount + hunger free input value:${add_label_amt+input_amt}
     ${get_hungerfree_amt}=    Get Text    xpath=.//div[@class='childData']/following-sibling::div//div[@class='cld-nme']/p[contains(.,'HungerFree')]/parent::div/following-sibling::div/p[1]
@@ -706,23 +727,21 @@ Just post login check hungerfree campaign
     ${get_final_amt}=    Strip String    ${SPACE}${get_split_label_amt}
     Log To Console    Overall hunger free label amount:${get_final_amt}
     Run Keyword If    ${add_label_amt+input_amt}!=${get_final_amt}    Fail    "After success Hunger free campaign recent amount not added in label"    
-
    
 Just pre login check hungerfree campaign
-    #Local browser launch
+    [Tags]    PreLogin
+
     Jenkins browser launch
     Click Element    xpath=//a[contains(text(),'Login')]
     Direct login
-    Click Element    xpath=.//li[@class='post_lgn']/a
-    Click Element    xpath=.//ul[@class='nav nav-tabs gift-donation']/li[contains(.,'Donation')]
-    Click Element    xpath=.//div[@class='tog-top-sec']/ul/li[contains(.,'My Donations')]
+    My Next Payment
+    My Next Payment Gift Menu Check and Select Submenu    My Donations
     ${hunger_free_label_chck}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@class='childData']/following-sibling::div//div[@class='cld-nme']/p[contains(.,'HungerFree')]
     ${Hungerfree_label_amt}=    Get Text    xpath=.//div[@class='childData']/following-sibling::div//div[@class='cld-nme']/p[contains(.,'HungerFree')]/parent::div/following-sibling::div/p[1]
     ${split_amt_label}=    Fetch From Right    ${Hungerfree_label_amt}    Amount Paid : ₹
     ${final_label_amt}=    Strip String    ${SPACE}${split_amt_label}
-    Log To Console    Before hunger free label amount:${final_label_amt}
-    Mouse Over    xpath=.//li[@class='welcomesponsor']
-    Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'Logout')]    
+    Log To Console    Before hunger free label amount:${final_label_amt}    
+    Logout    
     Click Element    class=close-survey    
     ${check_success_logout}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//li[@class='pre_lgn']
     Run Keyword If    'True'!='${check_success_logout}'    Fail    "Site not getting proper logout"
@@ -731,11 +750,10 @@ Just pre login check hungerfree campaign
     View cart proceed button
     Login
     CCavenue payment success flow
-    Click Element    xpath=.//li[@class='post_lgn']/a
-    Why do you want to quit - PopUp
-    Click Element    xpath=.//li[@class='post_lgn']/a
-    Click Element    xpath=.//ul[@class='nav nav-tabs gift-donation']/li[contains(.,'Donation')]
-    Click Element    xpath=.//div[@class='tog-top-sec']/ul/li[contains(.,'My Donations')]
+    My Next Payment
+    Why do you want to leave - PopUp
+    My Next Payment
+    My Next Payment Gift Menu Check and Select Submenu    My Donations
     ${hunger_free_label_chck}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@class='childData']/following-sibling::div//div[@class='cld-nme']/p[contains(.,'HungerFree')]
     Run Keyword If    'True'!='${hunger_free_label_chck}'    Fail    "Hunger free label not display"
     ${add_label_amt+input_amt}=    Evaluate    ${final_label_amt}+${hunger_get_input_val}
@@ -745,7 +763,6 @@ Just pre login check hungerfree campaign
     ${get_final_amt}=    Strip String    ${SPACE}${get_split_label_amt}
     Log To Console    Overall final hunger free label val:${get_final_amt}
     Run Keyword If    ${add_label_amt+input_amt}!=${get_final_amt}    Fail    "After success Hunger free campaign recent amount not added in label"
-
 
 
 To download tax receipt 
@@ -930,15 +947,15 @@ Multiple deletion
     ${check_cartpage_after_complete_del}=   Get Text    xpath=//div[@class='Empty_basket_Content']/h1    
     Run Keyword If    '${check_cartpage_after_complete_del}'!='Your Gift Cart is Empty'    Fail    "In View cart page after complete deletion 'Your Gift Cart is Empty' text not display"
 
-To add child to a cart
-    #Local browser launch
+To add child to a cart            
+
     Jenkins browser launch
     #Execute Javascript    window.scrollTo(0, 600)
     ${child_name}    ${sel_child_amt}    ${sel_child_imgsrc}    Rotator Child Details
     Log To Console    Child name:${child_name} and child amount:${sel_child_amt} and also child img src:${sel_child_imgsrc}        
     Rotator Payment validation    ${sel_child_imgsrc}
     Click Element    xpath=//a[@class='view_cart']
-    Rotator Child cart validation    ${child_name}    ${sel_child_amt}"
+    Rotator Child cart validation    ${child_name}    ${sel_child_amt}
 
 SI Flow payment gateway list and text check
     #Local browser launch
@@ -1043,8 +1060,7 @@ Ensure overview campaign label in Hosh menu
     [Tags]    Hope to Shine campaign
     
     Jenkins browser launch
-    Mouse Over    xpath=//div[@class='main-menu-inner']//li/span[contains(.,'Ways to Give')]
-    Click Element    xpath=//div[@class='main-menu-inner']//li/a[contains(.,'Overview')]
+    Mouser hover ways to give campaign    Overview    
     ${overview_menus_list}=    Get Element Count    xpath=.//div[@class='views-element-container']//a
     Run Keyword If    ${overview_menus_list}!=12    Fail    "In Overview page menu list are mismatch"
     Click Element    xpath=//div[@class='col-md-12 ways-scroll-info']/div[1]//h3
@@ -1057,6 +1073,8 @@ Ensure overview campaign label in Hosh menu
     #${wv_url}=    Get Location
     #Log To Console    WV url is:${wv_url}
     Click Element    xpath=//div[@class='gbl_tabbed_menu']/ul/li[2]
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@class='IMGSec_cover']    
+    Run Keyword If    '${status}'!='True'    Fail    Current there is no child in the education tab
     Mouse Over    xpath=//div[@class='IMGSec_cover']
     Sleep    5s    
     Click Element    xpath=//div[@class='Gift_add giftBtn']/input    
@@ -1176,7 +1194,7 @@ Post login ways to give submenu list verification
     # Input Text    id=edit-pass  test
     # Click Element    xpath=(//div[@class='login-form__submit']/button)[1]
     # Mouse Over    xpath=.//li[@class='welcomesponsor']
-    # Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My profile')]
+    # Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My Profile')]
     # Click Element    xpath=.//a[contains(.,'Edit Profile')]
     # Scroll Element Into View    xpath=.//label[@for='edit-field-nationality']
     # ${ind}=    Execute Javascript    return window.jQuery('#indctzn').prop('checked')
@@ -1208,93 +1226,44 @@ Other passport holder should not change to Indian passport holder
     Log To Console    Other is choosed:${other}  
     Run Keyword If    'True'=='${other}'    Check indian passport holder
 
-
 To verify payment gateways for other passport holder
+    [Tags]    Payment gateway Based on Nationality
+
     Jenkins browser launch
     Click Element    xpath=//a[contains(text(),'Login')]
     Direct login - Other passport user
-    Mouse Over    xpath=.//li[@class='welcomesponsor']
-    Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My profile')]
-    Click Element    xpath=.//a[contains(.,'Edit Profile')]
-    Scroll Element Into View    xpath=.//label[@for='edit-field-nationality']
-    ${other}=    Execute Javascript    return window.jQuery('#othctzn').prop('checked')
-    Run Keyword If    'True'!='${other}'    Fail    "By default Other passport holder should be checked but not like that"
-    Click Element    xpath=.//a[contains(.,'My Gifts')]
+    Click Element    xpath=.//a[contains(.,'My Gifts')]    
     Banner Alert
-    ${get_viewcart_list_count}=    Get Element Count    xpath=//tbody/tr/td[starts-with(@headers,'view-product-')]        
-    ${get_viewcart_list_count}=    Convert To Integer    ${get_viewcart_list_count}            
-    Run Keyword If    ${get_viewcart_list_count} < 1    Log To Console    "No campaign in view cart page"    ELSE    Notification deletion    ${get_viewcart_list_count}            
-    #Select Hunger free campaign
-    Mouse Over    xpath=//li/span[contains(text(),'Ways to Give')]
-    Click Element    xpath=(.//li/a[contains(.,'Hungerfree')])[1]
-    Sleep    10s
-    Click Element    xpath=.//div[@class='add-to-cart-section']
-    ${hunger_camp_name}=    Get Text    xpath=.//div[@class='inner_banner_pledge_content']/h2/div
-    ${split_Hunger_name_with_rightside}=    Remove String    ${hunger_camp_name}    Free
-    ${input_val}=    Get Element Attribute    xpath=.//input[@name='manualCart[0][amount]']    value
-    Click Element    xpath=//div[@class='kl_flood_sub_or_sec']
-    ${success_mgs}=    Get Text    xpath=.//h2[@class='chat-text']
-    Run Keyword If    '${success_mgs}'!='Success !'    Fail    "Success ! msg not found"
-    Click Element    xpath=//a[@class='view_cart']
-    Banner Alert
-    ${hunger_camp_viewcart}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//td[@class='views-field views-field-product-id'][contains(.,'${split_Hunger_name_with_rightside}[0]')]
-    Run Keyword If    'True'!='${hunger_camp_viewcart}'    Fail    "Hunger Free campaign not display in view cart page"
-    ${replace_val}=    Replace String    ${input_val}    1    1,
-    ${hunger_camp_amt_viewcart}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//td[@class='views-field views-field-total-price__number views-align-center'][contains(.,'₹${replace_val}')]
-    Run Keyword If    'True'!='${hunger_camp_amt_viewcart}'    Fail    "Hunger Free campaign amount is mismatch in view cart page"
+    Cart campaign check and delete
+    View Myprofile    
+    Nationality Check        
+    # ${other}=    Execute Javascript    return window.jQuery('#othctzn').prop('checked')
+    # Run Keyword If    'True'!='${other}'    Fail    "By default Other passport holder should be checked but not like that"    
+    Mouse hover ways to give after login    Educate Children
+    ${camp_name}    ${camp_amt}    other passport user flow
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
     View cart proceed button
-    ${checkout_payment_list}=    Get Element Count    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div
-    Run Keyword If    3!=${checkout_payment_list}    Fail    "Checkout flow Other passport holder payment list are mismatch"
-    FOR    ${bank_txt}    IN    @{checkout_payment_list_text}
-        ${checkout_banklist_name_check}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div/span[contains(.,'${bank_txt}')]
-        Run Keyword If    'True'!='${checkout_banklist_name_check}'    Fail    'Checkout Flow Other passport holder Payment Gateway ${bank_txt} text is mismatch'
-    END
+    ${camp_amt}=    Convert to price    ${camp_amt}
+    Hdfc bank payment gateway check            
 
 To verify payment gateways for indian citizen
-    #Local browser launch
+    [Tags]    Payment gateway Based on Nationality
+
     Jenkins browser launch
     Click Element    xpath=//a[contains(text(),'Login')]
     Direct login
-    Mouse Over    xpath=.//li[@class='welcomesponsor']
-    Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My profile')]
-    Click Element    xpath=.//a[contains(.,'Edit Profile')]
-    Scroll Element Into View    xpath=.//label[@for='edit-field-nationality']
-    ${ind}=    Execute Javascript    return window.jQuery('#indctzn').prop('checked')
-    Run Keyword If    'True'!='${ind}'    Fail    "By default Indian passport holder should be checked but not like that"
+    View Myprofile
+    Nationality Check - Indian    
     Click Element    xpath=.//a[contains(.,'My Gifts')]    
     Banner Alert   
-    ${get_viewcart_list_count}=    Get Element Count    xpath=//tbody/tr/td[starts-with(@headers,'view-product-')]        
-    ${get_viewcart_list_count}=    Convert To Integer    ${get_viewcart_list_count}          
-    Run Keyword If    ${get_viewcart_list_count} < 1    Log To Console    "No campaign in view cart page"    ELSE    Notification deletion    ${get_viewcart_list_count}    
-    Mouse Over    xpath=//div[@class='main-menu-inner']//li/span[contains(text(),'Ways to Give')]
-    Click Element    xpath=//div[@class='main-menu-inner']//li/a[contains(text(),'Educate Children')]
+    Cart campaign check and delete
+    Mouse hover ways to give after login    Educate Children    
     Sleep    5s
-    Click Element    xpath=.//div[@class='item-image']//img
-    ${educate_chld_camp_name}=    Get Text    xpath=.//div[@class='inner_banner_pledge_content']/h2/div        
-    Click Element    xpath=(//div[@class='price save-malnourished-cart-sec'])[2]/label
-    Sleep    15s
-    Click Element    id=ChkForSI
-    Click Element    xpath=.//input[@class='commerce_manual_input realgift_inputvalue realgift_input']
-    Input Text    xpath=.//input[@class='commerce_manual_input realgift_inputvalue realgift_input']    ${edu_child_amt}
-    Click Element    xpath=//div[@class='kl_flood_sub_or_sec']
-    Click Element    xpath=//a[@class='view_cart']    
-    Banner Alert
-    ${replace_val_educate_camp}=    Replace String    ${edu_child_amt}    4    4,
-    ${edu_child_camp_viewcart}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//td[@class='views-field views-field-product-id' and contains(text(),'${educate_chld_camp_name}')]
-    Run Keyword If    'True'!='${edu_child_camp_viewcart}'    Fail    "Educate children campaign not display in view cart page"
-    ${chck_edu_child_camp_amt_viewcart}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//td[@class='views-field views-field-total-price__number views-align-center'][contains(.,'₹${replace_val_educate_camp}')]
-    Run Keyword If    'True'!='${chck_edu_child_camp_amt_viewcart}'    Fail    "Educate children campaign amount are not display/mismatch in view cart page"
+    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
     View cart proceed button
-    ${checkout_payment_list}=    Get Element Count    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div
-    Run Keyword If    5!=${checkout_payment_list}    Fail    "Checkout flow Indian passport holder payment list are mismatch"
-    FOR    ${bank_txt}    IN    @{checkout_payment_list_text}
-        ${checkout_banklist_name_check}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div/span[contains(.,'${bank_txt}')]
-        Run Keyword If    'True'!='${checkout_banklist_name_check}'    Fail    'Checkout Flow Indian passport holder Payment Gateway Powered by ${bank_txt} text is mismatch'
-    END
-    FOR    ${checkout_bank_txt}    IN    @{checkout_payment_list_ind_passport}
-        ${checkout_banklist_name_check}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div/label[contains(.,'${checkout_bank_txt}')]
-        Run Keyword If    'True'!='${checkout_banklist_name_check}'    Fail    'Checkout Flow Indian passport holder Payment Gateway ${bank_txt} text is mismatch'
-    END
+    #Indian payment gateway check - payment type  
+    Indian payment gateway check - payment gateway
  
 Max val alert in view cart page
     Jenkins browser launch
@@ -1416,8 +1385,7 @@ Verify user should Able to add profile details with Valid Data
     Scroll Element Into View    id=edit-submit    
     Click Element    id=edit-submit
 
-    Mouse Over    xpath=.//li[@class='welcomesponsor']
-    Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My profile')]    
+    View Myprofile    
 
     ${last_Name}=    Get Text    xpath=//span[@class='userspanprofile']/div
     Run Keyword If    'NewLastName Test'=='${last_Name}'    Log To Console    "LastName Updated in Edit profile"    ELSE    Fail    "Unable to edit Last Name"
@@ -1434,8 +1402,7 @@ Verify user should Able to add profile details with Valid Data
     Scroll Element Into View    id=edit-submit    
     Click Element    id=edit-submit
     
-    Mouse Over    xpath=.//li[@class='welcomesponsor']
-    Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'My profile')]    
+    View Myprofile    
   
 To verify that user can edit the City State Country even though it is auto Populated
     [Tags]    Registration Page
@@ -1656,18 +1623,19 @@ To select children through gender filter
     Run Keyword If    '${most_needed}'=='True'    Log To Console    "Most Needed is selected by default"    ELSE    Fail    "Most Needed was not selected by default"
     
     Execute JavaScript    window.scrollTo(0, 400)
+    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//label[@for='gender-boy']/span[1]        
+    Run Keyword If    '${status}'!='True'    Fail    There is no child currently or Boy gender is not available
 
     ${gender}=    Get Text    xpath=//label[@for='gender-boy']/span[1]
     ${gender}=    Replace String    ${gender}    B    b
     Click Element    xpath=//label[@for='gender-boy']/span[1]      
-
-    Sleep    15s    
-
-    Wait Until Element Is Visible    xpath=//li[@class='pager__item']/a
+    Sleep    15s
+        
+    Wait Until Element Is Visible    xpath=//li[@class='pager__item']/a    60s
     Click Element    xpath=//li[@class='pager__item']/a            
     
     Sleep    10s        
-
     ${gender_count}=    Get Element Count    xpath=//div[@class='bySpecContHolder']//p/span[contains(text(),'${gender}')]
     Log To Console    No of childrens found: ${gender_count}
     FOR    ${element}    IN RANGE    1    ${gender_count}+1
@@ -2526,13 +2494,15 @@ To check with the filters in news articles page
     Navigation banner close    
     Event Page menu check    News Articles
     Event Submenu Check    News Articles
-    Event page filter    ${month_input}    2019    ${language_input}            
-    Sleep    40s    
-    ${month_sort}=    Get Substring    ${month_input}    0    3            
-    ${month}=    Get Text    xpath=//div[@class='media-press-page']//span[@class='media-mont']
-    Run Keyword If    '${month_sort}'!='${month}'    Fail    Month mismatch or No data found
-    ${year}=    Get Text    xpath=//div[@class='media-press-page']//span[@class='media-year']
-    Run Keyword If    '2019'!='${year}'    Fail    Month mismatch or No data found
+    Event page filter    ${month_input}    2019    ${language_input}               
+    ${month_sort}=    Get Substring    ${month_input}    0    3                
+    #Scroll Element Into View    id=edit-subscribe
+    Sleep    10s    
+    Scroll Element Into View    xpath=//div[@class='media-press-page']//span[@class='media-mont']
+    ${month}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@class='media-press-page']//span[@class='media-mont' and contains(text(),'${month_sort}')]           
+    Run Keyword If    'True'!='${month}'    Fail    Month mismatch or No data found
+    ${year}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@class='media-press-page']//span[@class='media-year' and contains(text(),'2019')]
+    Run Keyword If    'True'!='${year}'    Fail    Year mismatch or No data found
 
 To check with the filters in press release page
     [Tags]    Media
@@ -2542,7 +2512,7 @@ To check with the filters in press release page
     Event Page menu check    Press Releases
     Event Submenu Check    Press Releases
     Event page filter    ${month_input}    ${year_input}    ${language_input}
-    Sleep    40s   
+    Sleep    15s   
     Event page filter verification    ${month_input}    ${year_input}
 
 To Verify User should submit the form with Mandatory data - Hungerfree
@@ -2637,16 +2607,12 @@ To Verify User should submit form with Valid Sponsor ID - End Child sexual abuse
     
 To Verify welcome banner should appear for Donor on Second login
     [Tags]    Myworld Page    
-
     Jenkins browser launch
     Navigation banner close
     Click Element    xpath=//a[contains(text(),'Login')]
     Direct login    
-    Wait Until Element Is Visible    xpath=//div[@class='swiper-wrapper']/following-sibling::div//span[@aria-label='Go to slide 2']    60s    
-    Click Element    xpath=//div[@class='swiper-wrapper']/following-sibling::div//span[@aria-label='Go to slide 1']    
-    ${get_banner_text}=    Get Text    xpath=(//div[@class='banner-content'])[2]/h2
-    ${get_banner_text}=    Remove String Using Regexp    ${get_banner_text}    \,.*$
-    Run Keyword If    'Welcome Back'!='${get_banner_text}'    Fail    Welcome User message wasnt displayed
+    Sleep    10s    
+    Welcome user banner text    Welcome
 
 To Verify Upcomming Events Banner Functionallity appear by selecting loaction
     [Tags]    Myworld Page    
@@ -2670,24 +2636,40 @@ To verify payment success for ccavenue payment gateway - For other passport hold
     Direct login - Other passport user    
     Click Element    xpath=.//a[contains(.,'My Gifts')]
     Banner Alert
-    Cart campaign check and delete            
-    #Select Hunger free campaign
-    Mouse Over    xpath=//li/span[contains(text(),'Ways to Give')]
-    Click Element    xpath=//li/a[contains(.,'Educate Children')]
+    Cart campaign check and delete                
+    Mouse hover ways to give after login    Educate Children
     Sleep    10s
-    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${camp_name}    ${camp_amt}    other passport user flow
     ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
-    View cart proceed button
+    View cart proceed button    
+    Hdfc bank payment gateway check           
     
-    ${checkout_payment_list}=    Get Element Count    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div
-    Run Keyword If    3!=${checkout_payment_list}    Fail    "Checkout flow Other passport holder payment list are mismatch"
-    FOR    ${bank_txt}    IN    @{checkout_payment_list_text}
-        ${checkout_banklist_name_check}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div/span[contains(.,'${bank_txt}')]
-        Run Keyword If    'True'!='${checkout_banklist_name_check}'    Fail    'Checkout Flow Other passport holder Payment Gateway ${bank_txt} text is mismatch'    ELSE    Log To Console    Payment gateway lists are matching    
-    END
-    ${camp_amt}=    Convert to price    ${camp_amt}
-    CCavenue payment success flow
-    CCavenue payment - cart verification - dynamic    ${camp_name}    ${camp_amt}    ${cart_quanity}
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//input[contains(@id,'edit-payment-information-payment-method')]/following-sibling::span[contains(text(),'${checkout_payment_list_text}[2]')]
+    Run Keyword If    '${status}'=='True'    Click Element    xpath=//span[contains(text(),'POWERED BY HDFC BANK')]//preceding-sibling::input    ELSE    Log    POWERED BY HDFC BANK is not dispalyed
+    Sleep    20s    
+    Click Element    xpath=//div[@id='edit-actions']/button[contains(text(),'pay my contribution')]    
+    Wait Until Element Is Visible    xpath=//li[contains(text(),'Pay with')]    30s    
+    Click Element    xpath=//li[contains(text(),'Pay with')]    
+    Sleep    5s        
+    Mouse Over    id=hdfc_credit
+    Click Element    id=hdfc_credit
+    Sleep    5s      
+
+    Input Text    class=cardNumber    5555 5555 5555 5555
+    Input Text    id=name    Test name
+    Select From List By Index    id=expMonthSelect    6
+    Select From List By Index    id=expYearSelect    4        
+    Input Text    id=cvv_no    123    
+    
+    # ${checkout_payment_list}=    Get Element Count    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div
+    # Run Keyword If    3!=${checkout_payment_list}    Fail    "Checkout flow Other passport holder payment list are mismatch"
+    # FOR    ${bank_txt}    IN    @{checkout_payment_list_text}
+        # ${checkout_banklist_name_check}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div/span[contains(.,'${bank_txt}')]
+        # Run Keyword If    'True'!='${checkout_banklist_name_check}'    Fail    'Checkout Flow Other passport holder Payment Gateway ${bank_txt} text is mismatch'    ELSE    Log To Console    Payment gateway lists are matching    
+    # END
+    # ${camp_amt}=    Convert to price    ${camp_amt}
+    # CCavenue payment success flow
+    # CCavenue payment - cart verification - dynamic    ${camp_name}    ${camp_amt}    ${cart_quanity}
 
 To verify payment failure for cc avenue payment gateway - For other passport holder
     [Tags]    Payment acknowledgment for other passport holder
@@ -3256,3 +3238,572 @@ To Verify Address 2 Field minimum and maximum
     ${address_max}=    Get Element Attribute    xpath=//input[@id='edit-field-address-2-0-value']    value
     ${length}=    Get Length    ${address_max}
     Run Keyword If    ${length}>60    Fail    Maximum length is exceeded in address field    ELSE    Log To Console    Maximum length is maintained in address field    
+
+To verify How do you Know about World Vision select from the options provided in
+    [Tags]    Registration Page
+    
+    Jenkins browser launch
+    Navigation banner close    
+    Click Element    xpath=//a[contains(text(),'Register')]    
+    FOR    ${element}    IN    @{how_do_you_know}
+        ${status}=    Run Keyword And Return Status    Element Should Be Visible    id=edit-field-how-do-you-know-about-worl 
+        Run Keyword If    '${status}'=='True'    Select From List By Label    id=edit-field-how-do-you-know-about-worl    ${element}    ELSE    Fail    "${element} is not in how do you know dropdown"
+    END 
+
+To verify payment failure for HDFC payment gateway - For indian passport holder
+    [Tags]    Payment Acknowlodgement for Indian Passport Holder          
+      
+    Jenkins browser launch
+    Click Element    xpath=//a[contains(text(),'Login')]
+    Direct login    
+    Click Element    xpath=.//a[contains(.,'My Gifts')]
+    Banner Alert
+    Cart campaign check and delete            
+    #Select Hunger free campaign
+    Mouse Over    xpath=//li/span[contains(text(),'Ways to Give')]
+    Click Element    xpath=//li/a[contains(.,'Educate Children')]
+    Sleep    10s
+    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+    View cart proceed button    
+    ${checkout_payment_list}=    Get Element Count    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div
+    Run Keyword If    4!=${checkout_payment_list}    Fail    "Checkout flow Other passport holder payment list are mismatch"
+    FOR    ${bank_txt}    IN    @{checkout_payment_list_text}
+        ${checkout_banklist_name_check}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div/span[contains(.,'${bank_txt}')]
+        Run Keyword If    'True'!='${checkout_banklist_name_check}'    Fail    'Checkout Flow Other passport holder Payment Gateway ${bank_txt} text is mismatch'    ELSE    Log To Console    Payment gateway lists are matching    
+    END
+    ${camp_amt}=    Convert to price    ${camp_amt}
+    HDFC payment failure flow    
+    CCavenue payment - failure cart verification    ${camp_name}    ${camp_amt}    ${cart_quanity}
+
+To verify payment failure for Axis bank payment gateway - For indian passport holder
+    [Tags]    Payment Acknowlodgement for Indian Passport Holder          
+      
+    Jenkins browser launch
+    Click Element    xpath=//a[contains(text(),'Login')]
+    Direct login    
+    Click Element    xpath=.//a[contains(.,'My Gifts')]
+    Banner Alert
+    Cart campaign check and delete            
+    #Select Hunger free campaign
+    Mouse Over    xpath=//li/span[contains(text(),'Ways to Give')]
+    Click Element    xpath=//li/a[contains(.,'Educate Children')]
+    Sleep    10s
+    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+    View cart proceed button    
+    ${checkout_payment_list}=    Get Element Count    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div
+    Run Keyword If    4!=${checkout_payment_list}    Fail    "Checkout flow Other passport holder payment list are mismatch"
+    FOR    ${bank_txt}    IN    @{checkout_payment_list_text}
+        ${checkout_banklist_name_check}=    Run Keyword And Return Status    Element Should Be Visible    xpath=.//div[@id='block-paymentmode']//div[@id='edit-payment-information-payment-method']/div/span[contains(.,'${bank_txt}')]
+        Run Keyword If    'True'!='${checkout_banklist_name_check}'    Fail    'Checkout Flow Other passport holder Payment Gateway ${bank_txt} text is mismatch'    ELSE    Log To Console    Payment gateway lists are matching    
+    END
+    ${camp_amt}=    Convert to price    ${camp_amt}
+    Axis payment failure flow    
+    CCavenue payment - failure cart verification    ${camp_name}    ${camp_amt}    ${cart_quanity}
+
+To verify cart data is maintaining for existing user
+    [Tags]    Cart functionality
+    
+    Jenkins browser launch
+    Banner Alert        
+    Click Element    xpath=//a[contains(text(),'Login')]
+    Direct login        
+    Click Element    xpath=.//a[contains(.,'My Gifts')]    
+    Cart campaign check and delete
+    Sleep    10s       
+    Mouser hover ways to give campaign    Educate Children
+    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+    
+    Sleep    10s        
+    Mouse Over    xpath=.//li[@class='welcomesponsor']
+    Click Element    xpath=.//ul[@class='mypro-lgot']/li/a[contains(.,'Logout')]
+    Click Element    class=close-survey    
+    
+    ${title}=    Get Title    
+    Run Keyword If    '${title}'=='Log in | World vision'    Log To Console    User logged out and redirected to login page    ELSE    Fail    User does not logged out    
+    
+    Click Element    xpath=//a[contains(text(),'Login')]
+    Direct login
+    Click Element    xpath=.//a[contains(.,'My Gifts')]             
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+
+To verify payment failure for HDFC payment gateway - For other passport holder
+    [Tags]    Payment Acknowledgment for Other Passport Holder
+
+    Jenkins browser launch
+    Click Element    xpath=//a[contains(text(),'Login')]
+    Direct login - Other passport user    
+    Click Element    xpath=.//a[contains(.,'My Gifts')]
+    Banner Alert
+    Cart campaign check and delete
+    Mouse hover ways to give after login    Educate Children
+    ${camp_name}    ${camp_amt}    other passport user flow
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+    View cart proceed button
+    ${camp_amt}=    Convert to price    ${camp_amt}
+    Hdfc bank payment gateway check
+    HDFC payment failure flow    
+    CCavenue payment - failure cart verification    ${camp_name}    ${camp_amt}    ${cart_quanity}
+
+To verify payment using SI with existing onetime donation payment in cart
+    [Tags]    Multiple payment functionality
+    
+    Jenkins browser launch
+    Navigation banner close
+    Click Element    xpath=//a[contains(text(),'Login')]
+    Direct login
+    Click Element    xpath=.//a[contains(.,'My Gifts')]
+    Banner Alert
+    Cart campaign check and delete
+    Mouser hover ways to give campaign    Educate Children
+    ${camp_name}    ${Camp_val}    one time campaign
+    ${cart_quanity}    check in view cart page - One time donation flow    ${camp_name}    ${Camp_val}        
+    Mouse hover ways to give after login    Educate Children
+    SI flow campaign
+    SI payment gateway check    
+    
+    Click Element    xpath=//div[contains(@class,'net-banking-payment other-bank-opt debit')]    
+    Click Element    xpath=//button[text()='Proceed']
+
+To verify login through valid email ID with invalid OTP
+    [Tags]    LOGIN
+    
+    Jenkins browser launch
+    Click Element    xpath=//a[contains(text(),'Login')]
+    
+    Click Element    id=edit-name    
+    Input Text    id=edit-name    wv@wv.com 
+    
+    Click Element    id=ToGetOTP    
+    
+    Wait Until Element Is Visible    class=orngClr    60s
+    
+    ${status}=    Run Keyword And Return Status    Element Should Contain    class=orngClr    OTP has been sent to your Mobile/Email
+    Run Keyword If    'True'=='${status}'    Log    OTP alert message displayed    ELSE    Fail    OTP alert message was not displayed
+
+    Click Element    id=edit-pass
+    Input Text    id=edit-pass    123456    
+
+    Click Element    xpath=(//div[@class='login-form__submit']/button)[1] 
+    
+    Wait Until Element Is Visible    id=edit-pass-error    60s       
+    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    id=edit-pass-error
+    Run Keyword If    'True'=='${status}'    Log    Login failure alert message displayed    ELSE    Fail    Login failure alert message was not displayed
+
+    
+To verify login through valid mobile number with invalid OTP
+    [Tags]    LOGIN    
+    
+    Jenkins browser launch
+    Click Element    xpath=//a[contains(text(),'Login')]
+    
+    Click Element    id=edit-name    
+    Input Text    id=edit-name    9999999995
+    
+    Click Element    id=ToGetOTP    
+    
+    Wait Until Element Is Visible    class=orngClr    60s
+    
+    ${status}=    Run Keyword And Return Status    Element Should Contain    class=orngClr    OTP has been sent to your Mobile/Email
+    Run Keyword If    'True'=='${status}'    Log    OTP alert message displayed    ELSE    Fail    OTP alert message was not displayed
+
+    Click Element    id=edit-pass
+    Input Text    id=edit-pass    123456    
+
+    Click Element    xpath=(//div[@class='login-form__submit']/button)[1] 
+    
+    Wait Until Element Is Visible    id=edit-pass-error    60s       
+    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    id=edit-pass-error
+    Run Keyword If    'True'=='${status}'    Log    Login failure alert message displayed    ELSE    Fail    Login failure alert message was not displayed
+
+To verify amount addition in campaign based on transaction
+    [Tags]    Make payment page functionality
+    
+    Jenkins browser launch
+    Click Login
+    Direct login
+    Click Cart
+    Banner Alert
+    Cart campaign check and delete
+    
+    #Donating 1000Rs for Hungerfree campaign
+    Mouse hover ways to give after login    Hungerfree
+    ${camp_name}    ${Camp_val}    one time campaign - Hunger Free campaign - Multiple payment    ${amount}       
+    ${cart_quanity}    check in view cart page - One time donation flow    ${camp_name}    ${Camp_val}
+    View cart proceed button    
+    CCavenue payment success flow
+    CCavenue payment - cart verification    ${camp_name}    ${Camp_val}    ${cart_quanity}
+    Banner Alert
+    Click mainmenu    My Campaign 
+    Why do you want to leave - PopUp
+    Click mainmenu    My Campaign 
+    Mycampaign Check    ${camp_name}    
+    Click my next payment
+    ${Camp_val}=    Convert to price    ${Camp_val}
+    #My Next Payment cart check    ${camp_name}    ${Camp_val}
+       
+    #Donating 4000Rs for Hungerfree campaign
+    Logout
+    Direct login
+    ${camp_name2}    ${Camp_val2}    one time campaign - Hunger Free campaign - Multiple payment    ${HungerFree_amt}       
+    ${cart_quanity2}    check in view cart page - One time donation flow    ${camp_name2}    ${Camp_val2}
+    View cart proceed button    
+    CCavenue payment success flow
+    CCavenue payment - cart verification    ${camp_name2}    ${Camp_val2}    ${cart_quanity2}
+    Banner Alert
+    Click mainmenu    My Campaign
+    Why do you want to leave - PopUp
+    Click mainmenu    My Campaign  
+    Mycampaign Check    ${camp_name2}    
+    Click my next payment
+    ${Camp_val2}=    Convert to price    ${Camp_val2}
+    ${total_amount}=    Evaluate        ${Camp_val}+${Camp_val2}
+    #My Next Payment cart check    ${camp_name2}    ${total_amount} 
+
+Bubble Scenario-Online Payment : Sponsor Payment Mode - Delinquent + Current + Advance
+    [Tags]    Make payment page functionality
+    
+    Jenkins browser launch       
+    Click Login
+    Direct login
+    Click Cart
+    Banner Alert
+    Cart campaign check and delete
+    
+    Click my next payment
+    Click Element    xpath=//li[@id='campsec-shwhde']/a 
+    
+    ${campaign_available}=    Get Element Count    xpath=//div[contains(@class,'itm-sltn-add')]
+    ${campaign_total}=    Get Text    xpath=//div[@class='cost-sumry']//span[2]
+    
+    Click Element    class=pymnt-smt-sec
+    
+    ${cart_total_amt}=    Get Text    xpath=//p[@class='cld-amount-pyble']//span[2]    
+    
+    Run Keyword If    '${cart_total_amt}'!='${campaign_total}'    Fail    Cart amount doesnt match
+    Click Button    id=MP_add_to_cart_btn
+    
+    Click Element    class=view_cart
+    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=(//span[@class='order-total-line-value and contains(text(),'${cart_total_amt}'])[2]        
+    Run Keyword If    '${status}'!='True'    Fail    cart amount doesnt macth
+    CCavenue payment success flow
+    
+    Banner Alert
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@class='payment-paid']//span[contains(text(),'${cart_total_amt}')]        
+    Run Keyword If    '${status}'!='True'    Fail    cart amount doesnt macth
+
+Bubble Scenario-Offline Payment : Sponsor Payment Mode - Delinquent + Current + Advance
+    [Tags]    Make payment page functionality
+    
+    Jenkins browser launch       
+    Click Login
+    Direct login
+    Click Cart
+    Banner Alert
+    Cart campaign check and delete
+    
+    Click my next payment
+    Click Element    xpath=//li[@id='campsec-shwhde']/a 
+    
+    ${camp_name}=    Get Text    xpath=(//div[@class='cld-nme-dtls'])[1]/div[1]/p
+    Click Element    xpath=(//div[@class='cld-nme-dtls'])[1]
+    
+    ${camp_amt}=    Get Text    xpath=(//span[@class='childCart_total_amount'])[1]                
+    
+    Click Element    class=pymnt-smt-sec
+    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//p[@class='cld-amount-pyble']//span[2][contains(text(),'${camp_amt}')]            
+    Run Keyword If    '${status}'!='True'    Fail    Cart amount doesnt match
+    
+    Click Button    id=MP_add_to_cart_btn
+    
+    Click Element    class=view_cart
+    
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=(//span[@class='order-total-line-value' and contains(text(),'${camp_name}')])[2]        
+    Run Keyword If    '${status}'!='True'    Fail    cart amount doesnt macth        
+    
+    Click Element    id=edit-checkout    
+
+    Click Element    xpath=//input[@id='edit-payment-information-payment-method-offline-payment']    
+    Scroll Element Into View    class=upihead
+    Sleep    10        
+    Click Element    xpath=//label[@class='off-container' and contains(text(),'UPI')]/span
+    Sleep    10s 
+    Click Element    id=off-edit-actions-next
+    
+    Banner Alert
+    ${status}=    Run Keyword And Return Status    Element Should Be Visible    xpath=//div[@class='payment-paid']//span[contains(text(),'${camp_amt}')]        
+    Run Keyword If    '${status}'!='True'    Fail    cart amount doesnt macth
+
+To verify other passport holder SI payment is disabled - PostLogin
+    [Tags]    Payment gateway Based on Nationality
+    
+    Jenkins browser launch
+    Click Element    xpath=//a[contains(text(),'Login')]
+    Direct login - Other passport user
+    Click Element    xpath=.//a[contains(.,'My Gifts')]    
+    Banner Alert
+    Cart campaign check and delete
+    View Myprofile    
+    Nationality Check
+    Mouse hover ways to give after login    Educate Children
+    I Pledge to Support Click
+    SI Payment disable check
+
+To verify other passport holder SI payment is disabled - PreLogin
+    [Tags]    Payment gateway Based on Nationality
+    
+    Jenkins browser launch  
+    Gift Cart Click      
+    Cart campaign check and delete           
+    Mouser hover ways to give campaign    Educate Children        
+    #SI Payment disable check
+    SI flow campaign     
+    SI login - Other Passport
+    SI Other Passport Disabled Alert    
+    Page Title Check and confirm    Educate Children
+    
+    Gift Cart Click      
+    Cart campaign check and delete
+    Mouser hover ways to give campaign    Educate Children  
+    ${camp_name}    ${camp_amt}    other passport user flow
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+    View cart proceed button
+    ${camp_amt}=    Convert to price    ${camp_amt}
+    Hdfc bank payment gateway check
+
+To verify other passport holder SI payment is disabled in child rotator – PreLogin
+    [Tags]    Other passport SI payment verifiaction
+    
+    Jenkins browser launch    
+    ${child_name}    ${sel_child_amt}    ${sel_child_imgsrc}    Rotator Child Details
+    Log To Console    Child name:${child_name} and child amount:${sel_child_amt} and also child img src:${sel_child_imgsrc}
+    Rotator Allow Auto Debit status check
+    Rotator Proceed To Autopay
+    SI login - Other Passport    
+    SI Other Passport Disabled Alert    
+    Page Title Check and confirm    My World
+
+To verify share the joy alert functionality
+    [Tags]    Share the Joy functionality
+    
+    Jenkins browser launch
+    Gift Cart Click
+    Banner Alert
+    Cart campaign check and delete
+    Mouser hover ways to give campaign    Educate Children
+    Sleep    5s
+    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+    View cart proceed button
+    Login
+    CCavenue payment flow
+    Share the Joy Alert Capture
+
+To verify Why do you want to Leave Alert in Payment Page    
+    [Tags]    Payment Page Quit Alert
+    
+    Jenkins browser launch
+    Gift Cart Click
+    Banner Alert
+    Cart campaign check and delete
+    Mouser hover ways to give campaign    Educate Children
+    Sleep    5s
+    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+    View cart proceed button
+    Login
+    CCavenue payment success flow        
+    Banner Alert
+    My Next Payment
+    Why do you want to leave alert button check
+
+To verify share the joy alert email section funtionality 
+    [Tags]    Share the Joy functionality
+    
+    Jenkins browser launch
+    Gift Cart Click
+    Banner Alert
+    Cart campaign check and delete
+    Mouser hover ways to give campaign    Educate Children
+    Sleep    5s
+    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+    View cart proceed button
+    Login
+    CCavenue payment flow
+    Share the Joy Alert Capture
+    Share The Joy Email Section  
+
+To verify share the joy alert Copy URL section funtionality 
+    [Tags]    Share the Joy functionality
+    
+    Jenkins browser launch
+    Gift Cart Click
+    Banner Alert
+    Cart campaign check and delete
+    Mouser hover ways to give campaign    Educate Children
+    Sleep    5s
+    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+    View cart proceed button
+    Login
+    CCavenue payment flow
+    Share the Joy Alert Capture
+    Share The Joy Copy URL Section
+
+To verify cart page People have Also Donated for Suggession - campaign below 3 products 
+    [Tags]    Cart functionality
+    
+    Jenkins browser launch
+    Gift Cart Click
+    Banner Alert
+    Cart campaign check and delete
+    Mouser hover ways to give campaign    Educate Children
+    Sleep    5s
+    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}        
+    
+    ${CartCount}=    Get Element Count    class=views-field views-field-product-id
+    ${CartCount}=    Evaluate    ${CartCount}-1    
+    ${CartCount}=    Convert To Integer    ${CartCount}    
+    
+    Run Keyword If    ${CartCount}<3    People have Also Donated for Content Check    ELSE    Log    Currently there are more than 2 Campaign or child to sponsor
+
+To Verify User should submit form without entering Message
+    [Tags]    Form in contact us page
+    
+    Jenkins browser launch
+    Navigation banner close
+    Mouse Over    xpath=//div[@class='main-menu-inner']//*[contains(text(),'About Us')]
+    Click Element    xpath=//div[@class='main-menu-inner']//*[contains(text(),'Contact Us')] 
+    Sleep    15s    
+    Scroll Element Into View    id=edit-actions-submit                
+    Input Text    id=edit-name-    testname
+    Input Text    id=edit-email-    test@test.com
+    Input Text    id=edit-contact-    9999999995    
+    Click Element    id=edit-query-type-styled
+    Click Element    xpath=//a[text()='Sponsorship']           
+    Click Element    id=edit-actions-submit
+    Sleep    5s
+    ${alert}=    Run Keyword And Return Status    Element Should Contain    id=edit-message-error    Message is required
+    Run Keyword If    'True'!='${alert}'    Fail    Message field alert was not displayed    ELSE    Log    Message field alert displayed    
+
+To Verify User should submit the form without Query Type
+    [Tags]    Form in contact us page
+    
+    Jenkins browser launch
+    Navigation banner close
+    Mouse Over    xpath=//div[@class='main-menu-inner']//*[contains(text(),'About Us')]
+    Click Element    xpath=//div[@class='main-menu-inner']//*[contains(text(),'Contact Us')] 
+    Sleep    15s    
+    Scroll Element Into View    id=edit-actions-submit                
+    Input Text    id=edit-name-    testname
+    Input Text    id=edit-email-    test@test.com
+    Input Text    id=edit-contact-    9999999995    
+    Input Text    id=edit-message    test message input
+    Click Element    id=edit-actions-submit
+    Sleep    5s
+    ${alert}=    Run Keyword And Return Status    Element Should Contain    id=edit-query-type-error    Query Type is required
+    Run Keyword If    'True'!='${alert}'    Fail    Query Type field alert was not displayed    ELSE    Log    Query Type field alert displayed
+
+To Verify User should submit the form without Query Type - End Child sexual abuse Page    
+    [Tags]    Form in End Child sexual abuse Page
+    
+    Jenkins browser launch
+    Navigation banner close
+    Mouser hover ways to give campaign    End Child Sexual Abuse 
+    Sleep    15s    
+    Scroll Element Into View    id=edit-actions-submit                
+    Input Text    id=edit-name-    testname
+    Input Text    id=edit-email-    test@test.com
+    Input Text    id=edit-contact-    9999999995    
+    Input Text    id=edit-message    test message input
+    Click Element    id=edit-actions-submit
+    Sleep    5s
+    ${alert}=    Run Keyword And Return Status    Element Should Contain    id=edit-query-type-error    Query Type is required
+    Run Keyword If    'True'!='${alert}'    Fail    Query Type field alert was not displayed    ELSE    Log    Query Type field alert displayed
+    
+To Verify User should submit form without entering Message - End Child sexual abuse Page
+    [Tags]    Form in End Child sexual abuse Page
+    
+    Jenkins browser launch
+    Navigation banner close
+    Mouser hover ways to give campaign    End Child Sexual Abuse 
+    Sleep    15s    
+    Scroll Element Into View    id=edit-actions-submit                
+    Input Text    id=edit-name-    testname
+    Input Text    id=edit-email-    test@test.com
+    Input Text    id=edit-contact-    9999999995    
+    Click Element    id=edit-query-type-styled
+    Click Element    xpath=//a[text()='Sponsorship']           
+    Click Element    id=edit-actions-submit
+    Sleep    5s
+    ${alert}=    Run Keyword And Return Status    Element Should Contain    id=edit-message-error    Message is required
+    Run Keyword If    'True'!='${alert}'    Fail    Message field alert was not displayed    ELSE    Log    Message field alert displayed
+    
+To verify share the joy alert Social Media section funtionality 
+    [Tags]    Share the Joy functionality
+    
+    Jenkins browser launch
+    Gift Cart Click
+    Banner Alert
+    Cart campaign check and delete
+    Mouser hover ways to give campaign    Educate Children
+    Sleep    5s
+    ${camp_name}    ${camp_amt}    Checkout flow campaign
+    ${cart_quanity}    check in view cart page - Checkout flow    ${camp_name}    ${camp_amt}
+    View cart proceed button
+    Login
+    CCavenue payment flow
+    Share the Joy Alert Capture
+    Share The Joy Social Media Section    
+
+To verify interruption While registering new user and cancel continue where you left
+    [Tags]    Registration Page
+    
+    Jenkins browser launch - Without Incognito
+    Click Register
+    Select Title    Mr.
+    Enter First Name    TestNameF
+    Enter Last Name    TestNameL
+    Enter Email ID    test@test.test
+    Enter Phone Number    8888888880
+    Enter Password    password
+    Enter Confirm Password    password
+    Enter Address Field I    Test address 1    
+    Scroll Element Into View    class=singUpRegister
+    Click Create My Account    
+    Sleep    5s            
+    Close Browser
+    Sleep    5s       
+    Jenkins browser launch - Without Incognito
+    Wait Until Element Is Visible    xpath=//h4[contains(text(),'continue where you left')]    30s
+    Click Element    xpath=//button[contains(@class,'alredy-no')]  
+
+Verify user should submit the form without DOB 
+    [Tags]      Hunger Free Campaign
+    
+    Jenkins browser launch
+    Click Login
+    Direct login
+    Mouse hover ways to give after login    Hungerfree
+    Scroll Element Into View    id=edit-actions-submit
+    
+    Input Text    id=edit-name    Test Name  
+    Select From List By Value    id=edit-state    Chhattisgarh
+    Input Text    id=edit-email    test@test.com    
+    Input Text    id=edit-mobile-number    9999999999
+    
+    Click Element    id=edit-actions-submit
+    Click Element    class=head_first    
+    
+    Sleep    5s    
+
+    ${status}=    Run Keyword And Return Status    Element Should Contain    id=edit-date-of-birth-error    Date of Birth* is required.
+    Run Keyword If    '${status}'!='True'    Fail    Alert message for DOB is not displayed    ELSE    Log    Alert message for DOB is displayed
